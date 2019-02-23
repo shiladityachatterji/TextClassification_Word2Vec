@@ -28,30 +28,42 @@ df801=df801['Material Description']
 #creating the initial dataframe to be used
 df=pd.DataFrame(columns=['DESC','CLASS'])
 c=0
+d=0
 for item in df101:
     if(item!="NOT TO BE USED"):
         df.loc[c]=[item,'101']
         c+=1
+    else:
+        d+=1
 for item in df104:
     if(item!="NOT TO BE USED"):
         df.loc[c]=[item,'104']
         c+=1
+    else:
+        d+=1
 for item in df501:
     if(item!="NOT TO BE USED"):
         df.loc[c]=[item,'501']
         c+=1
+    else:
+        d+=1
 for item in df701:
     if(item!="NOT TO BE USED"):
         df.loc[c]=[item,'701']
         c+=1
+    else:
+        d+=1
 for item in df801:
     if(item!="NOT TO BE USED"):
         df.loc[c]=[item,'801']
         c+=1
+    else:
+        d+=1
     
 #cleaning text
 
 df = df.dropna() # remove missing values
+df=df.drop_duplicates()
 df = df[df.DESC.apply(lambda x: x !="")]
 token_count=0
 def clean_text(text):
@@ -110,9 +122,21 @@ def clean_text(text):
 df['DESC'] = df['DESC'].map(lambda x: clean_text(x))
 avg_words_per_sentence=math.ceil(token_count/len(df))
 
-#converting to tagged document for Doc2Vec
+#removing any duplicates left
 
-df['ss']=[1,2,3]
+df=(df.reset_index()).drop('index',axis=1)
+n=len(df)
+remove_indexes=[]
+for x in range(n):
+    for y in range(x+1,n):
+        if df['DESC'].loc[x]==df['DESC'].loc[y] and x!=y:
+            remove_indexes.append(x)
+            
+            print('yes--  ',x,'-',df['DESC'].iloc[x],'  ----  ',y,'-',df['DESC'].iloc[y])
+df=df.drop(remove_indexes)
+df=(df.reset_index()).drop('index',axis=1)
+
+#converting to tagged document for Doc2Vec
 
 tagged_data=[TaggedDocument(words=word_tokenize(sentence.lower()),tags=[sentence.lower()]) for sentence in df['DESC']]
 df['TAGGED_DATA']=tagged_data
@@ -143,5 +167,3 @@ for epoch in range(max_epochs):
 
 #to get a sentence vector,use the cleaned form of the sentence as an index into model.docvecs
 #to get vector for df['DESC'][0] use model.docvecs[df['DESC'][0]] or model[df['DESC'][0]]
-
-
