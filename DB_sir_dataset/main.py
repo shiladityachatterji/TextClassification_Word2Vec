@@ -167,3 +167,44 @@ for epoch in range(max_epochs):
 
 #to get a sentence vector,use the cleaned form of the sentence as an index into model.docvecs
 #to get vector for df['DESC'][0] use model.docvecs[df['DESC'][0]] or model[df['DESC'][0]]
+
+#obtaining the vectors x and y
+def create_XY(df_temp):
+    df_temp=(df_temp.reset_index()).drop('index',axis=1)
+    N=len(df_temp)
+    X=[]
+    Y=[]
+    for i in range(N):
+        print(i)
+        X.append(model.docvecs[df_temp['DESC'][i]])
+        cls=df_temp['CLASS'][i]
+        if cls=='101':
+            cls=[1,0,0,0,0]
+        elif cls=='104':
+            cls=[0,1,0,0,0]
+        elif cls=='501':
+            cls=[0,0,1,0,0]
+        elif cls=='701':
+             cls=[0,0,0,1,0]
+        else:    
+             cls=[0,0,0,0,1]
+        Y.append(cls)        
+    X=np.array(X)
+    Y=np.array(Y)
+    return X,Y
+
+#training the NN
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
+
+train, test = train_test_split(df, test_size=0.1)
+X_train,Y_train=create_XY(train)
+X_test,Y_test=create_XY(test)
+
+MLP=MLPClassifier(hidden_layer_sizes=(70,35,),tol=0.001,max_iter=5000)
+MLP=MLP.fit(X_train,Y_train)        
+
+MLP.score(X_test,Y_test)
+
+
+
